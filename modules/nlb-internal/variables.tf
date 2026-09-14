@@ -1,10 +1,10 @@
 variable "name" {
-  description = "NLB and target group name (must start with fbctf-)"
+  description = "NLB and target group name (must start with transform-demo-)"
   type        = string
 
   validation {
-    condition     = startswith(var.name, "fbctf-")
-    error_message = "The deploy permission set scopes named resources to fbctf-*; the name must start with fbctf-."
+    condition     = startswith(var.name, "transform-demo-")
+    error_message = "The deploy permission set scopes named resources to transform-demo-*; the name must start with transform-demo-."
   }
 }
 

@@ -11,7 +11,7 @@
 module "network" {
   source = "../../modules/network"
 
-  name     = "fbctf-sqlmod"
+  name     = "transform-demo-sqlmod"
   vpc_cidr = var.vpc_cidr
   az_count = 2
 }
@@ -30,7 +30,7 @@ resource "random_password" "sa" {
 }
 
 resource "aws_secretsmanager_secret" "sa" {
-  name                    = "fbctf-sqlmod/sa"
+  name                    = "transform-demo-sqlmod/sa"
   description             = "SQL Server sa login (mssql container on EC2)"
   recovery_window_in_days = 0
 }
@@ -41,7 +41,7 @@ resource "aws_secretsmanager_secret_version" "sa" {
 }
 
 resource "aws_security_group" "sqlserver" {
-  name        = "fbctf-sqlmod-sqlserver"
+  name        = "transform-demo-sqlmod-sqlserver"
   description = "SQL Server 1433 from within the VPC (the Transform DMS instance and the app tier)"
   vpc_id      = module.network.vpc_id
 
@@ -71,15 +71,15 @@ resource "aws_security_group" "sqlserver" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = { Name = "fbctf-sqlmod-sqlserver" }
+  tags = { Name = "transform-demo-sqlmod-sqlserver" }
 }
 
-# ---- schema files staged in S3 (too large for user-data; fbctf-* is in scope)
+# ---- schema files staged in S3 (too large for user-data; transform-demo-* is in scope)
 
 resource "aws_s3_bucket" "schema" {
-  bucket        = "fbctf-sqlmod-schema-337058058699-use1"
+  bucket        = "transform-demo-sqlmod-schema-337058058699-use1"
   force_destroy = true
-  tags          = { Name = "fbctf-sqlmod-schema" }
+  tags          = { Name = "transform-demo-sqlmod-schema" }
 }
 
 resource "aws_s3_bucket_public_access_block" "schema" {
@@ -112,7 +112,7 @@ resource "aws_s3_object" "app" {
 # the read-only login Transform connects with.
 
 resource "aws_iam_role" "host" {
-  name = "fbctf-sqlmod-host"
+  name = "transform-demo-sqlmod-host"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -151,7 +151,7 @@ resource "aws_iam_role_policy" "host_access" {
 }
 
 resource "aws_iam_instance_profile" "host" {
-  name = "fbctf-sqlmod-host"
+  name = "transform-demo-sqlmod-host"
   role = aws_iam_role.host.name
 }
 
@@ -182,7 +182,7 @@ resource "aws_instance" "sqlserver" {
     mssql_image   = var.mssql_image
   })
 
-  tags = { Name = "fbctf-sqlmod-sqlserver" }
+  tags = { Name = "transform-demo-sqlmod-sqlserver" }
 
   # The container's data lives on this instance; a user_data edit must not
   # recycle it. Re-run the loader over SSM if the schema logic changes.
@@ -215,7 +215,7 @@ resource "random_password" "app" {
 
 resource "aws_secretsmanager_secret" "app" {
   count                   = var.deploy_app ? 1 : 0
-  name                    = "fbctf-sqlmod/scoreboard-app"
+  name                    = "transform-demo-sqlmod/scoreboard-app"
   description             = "scoreboard_app SQL login used by the Contoso Scoreboard web app"
   recovery_window_in_days = 0
 }
@@ -234,7 +234,7 @@ resource "random_password" "app_winrm" {
 
 resource "aws_secretsmanager_secret" "app_winrm" {
   count                   = var.deploy_app ? 1 : 0
-  name                    = "fbctf-sqlmod/app-winrm"
+  name                    = "transform-demo-sqlmod/app-winrm"
   description             = "discovery local admin on the Contoso app host (WinRM, for the AWS Transform discovery tool)"
   recovery_window_in_days = 0
 }
@@ -247,7 +247,7 @@ resource "aws_secretsmanager_secret_version" "app_winrm" {
 
 resource "aws_security_group" "app" {
   count       = var.deploy_app ? 1 : 0
-  name        = "fbctf-sqlmod-app"
+  name        = "transform-demo-sqlmod-app"
   description = "Contoso Scoreboard: HTTP in, egress to SQL Server and AWS APIs"
   vpc_id      = module.network.vpc_id
 
@@ -274,12 +274,12 @@ resource "aws_security_group" "app" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = { Name = "fbctf-sqlmod-app" }
+  tags = { Name = "transform-demo-sqlmod-app" }
 }
 
 resource "aws_iam_role" "app" {
   count = var.deploy_app ? 1 : 0
-  name  = "fbctf-sqlmod-app"
+  name  = "transform-demo-sqlmod-app"
   assume_role_policy = jsonencode({
     Version   = "2012-10-17"
     Statement = [{ Effect = "Allow", Principal = { Service = "ec2.amazonaws.com" }, Action = "sts:AssumeRole" }]
@@ -315,7 +315,7 @@ resource "aws_iam_role_policy" "app_access" {
 
 resource "aws_iam_instance_profile" "app" {
   count = var.deploy_app ? 1 : 0
-  name  = "fbctf-sqlmod-app"
+  name  = "transform-demo-sqlmod-app"
   role  = aws_iam_role.app[0].name
 }
 
@@ -349,7 +349,7 @@ resource "aws_instance" "app" {
     max_minutes      = 0
   })
 
-  tags = { Name = "fbctf-sqlmod-app" }
+  tags = { Name = "transform-demo-sqlmod-app" }
 
   depends_on = [aws_s3_object.app, aws_secretsmanager_secret_version.app, aws_secretsmanager_secret_version.app_winrm, aws_instance.sqlserver]
 }
@@ -358,7 +358,7 @@ resource "aws_eip" "app" {
   count    = var.deploy_app ? 1 : 0
   instance = aws_instance.app[0].id
   domain   = "vpc"
-  tags     = { Name = "fbctf-sqlmod-app" }
+  tags     = { Name = "transform-demo-sqlmod-app" }
 }
 
 # ---- Project Nami: a second app on this SQL Server - WordPress's SQL Server
@@ -389,7 +389,7 @@ resource "random_password" "wp_admin" {
 
 resource "aws_secretsmanager_secret" "wp" {
   count                   = var.deploy_wordpress ? 1 : 0
-  name                    = "fbctf-sqlmod/wordpress-db"
+  name                    = "transform-demo-sqlmod/wordpress-db"
   description             = "wp_app SQL login used by Project Nami"
   recovery_window_in_days = 0
 }
@@ -402,7 +402,7 @@ resource "aws_secretsmanager_secret_version" "wp" {
 
 resource "aws_secretsmanager_secret" "wp_admin" {
   count                   = var.deploy_wordpress ? 1 : 0
-  name                    = "fbctf-sqlmod/wordpress-admin"
+  name                    = "transform-demo-sqlmod/wordpress-admin"
   description             = "Project Nami wp-admin login"
   recovery_window_in_days = 0
 }
@@ -415,7 +415,7 @@ resource "aws_secretsmanager_secret_version" "wp_admin" {
 
 resource "aws_security_group" "wordpress" {
   count       = var.deploy_wordpress ? 1 : 0
-  name        = "fbctf-sqlmod-wordpress"
+  name        = "transform-demo-sqlmod-wordpress"
   description = "Project Nami: HTTP in, egress to SQL Server and package repos"
   vpc_id      = module.network.vpc_id
 
@@ -442,12 +442,12 @@ resource "aws_security_group" "wordpress" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = { Name = "fbctf-sqlmod-wordpress" }
+  tags = { Name = "transform-demo-sqlmod-wordpress" }
 }
 
 resource "aws_iam_role" "wordpress" {
   count = var.deploy_wordpress ? 1 : 0
-  name  = "fbctf-sqlmod-wordpress"
+  name  = "transform-demo-sqlmod-wordpress"
   assume_role_policy = jsonencode({
     Version   = "2012-10-17"
     Statement = [{ Effect = "Allow", Principal = { Service = "ec2.amazonaws.com" }, Action = "sts:AssumeRole" }]
@@ -476,7 +476,7 @@ resource "aws_iam_role_policy" "wordpress_access" {
 
 resource "aws_iam_instance_profile" "wordpress" {
   count = var.deploy_wordpress ? 1 : 0
-  name  = "fbctf-sqlmod-wordpress"
+  name  = "transform-demo-sqlmod-wordpress"
   role  = aws_iam_role.wordpress[0].name
 }
 
@@ -510,7 +510,7 @@ resource "aws_instance" "wordpress" {
     site_url            = "http://${aws_eip.wordpress[0].public_ip}"
   })
 
-  tags = { Name = "fbctf-sqlmod-wordpress" }
+  tags = { Name = "transform-demo-sqlmod-wordpress" }
 
   depends_on = [aws_secretsmanager_secret_version.wp, aws_secretsmanager_secret_version.wp_admin, aws_instance.sqlserver]
 }
@@ -518,7 +518,7 @@ resource "aws_instance" "wordpress" {
 resource "aws_eip" "wordpress" {
   count  = var.deploy_wordpress ? 1 : 0
   domain = "vpc"
-  tags   = { Name = "fbctf-sqlmod-wordpress" }
+  tags   = { Name = "transform-demo-sqlmod-wordpress" }
 }
 
 resource "aws_eip_association" "wordpress" {

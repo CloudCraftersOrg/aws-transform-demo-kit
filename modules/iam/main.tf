@@ -1,6 +1,6 @@
 # Instance roles + profiles for the two EC2 tiers (§3.7). Role names must be
-# fbctf-* — the deploy permission set scopes IAM writes and PassRole to that
-# prefix. Both tiers get SSM Session Manager, artifacts-bucket read, /fbctf/*
+# transform-demo-* — the deploy permission set scopes IAM writes and PassRole to that
+# prefix. Both tiers get SSM Session Manager, artifacts-bucket read, /transform-demo/*
 # SSM parameter read, and CloudWatch Logs write; only the app tier can read
 # the DB secrets.
 
@@ -14,10 +14,10 @@ locals {
     app = { secrets_access = true }
   }
 
-  param_arn_prefix = "arn:${data.aws_partition.this.partition}:ssm:${data.aws_region.this.region}:${data.aws_caller_identity.this.account_id}:parameter/fbctf/*"
-  logs_arn_prefix  = "arn:${data.aws_partition.this.partition}:logs:${data.aws_region.this.region}:${data.aws_caller_identity.this.account_id}:log-group:/fbctf/*"
+  param_arn_prefix = "arn:${data.aws_partition.this.partition}:ssm:${data.aws_region.this.region}:${data.aws_caller_identity.this.account_id}:parameter/transform-demo/*"
+  logs_arn_prefix  = "arn:${data.aws_partition.this.partition}:logs:${data.aws_region.this.region}:${data.aws_caller_identity.this.account_id}:log-group:/transform-demo/*"
   secret_arns = [
-    "arn:${data.aws_partition.this.partition}:secretsmanager:${data.aws_region.this.region}:${data.aws_caller_identity.this.account_id}:secret:fbctf-*",
+    "arn:${data.aws_partition.this.partition}:secretsmanager:${data.aws_region.this.region}:${data.aws_caller_identity.this.account_id}:secret:transform-demo-*",
     "arn:${data.aws_partition.this.partition}:secretsmanager:${data.aws_region.this.region}:${data.aws_caller_identity.this.account_id}:secret:rds!*",
   ]
 }
@@ -57,13 +57,13 @@ data "aws_iam_policy_document" "tier" {
   }
 
   statement {
-    sid       = "FbctfParamsRead"
+    sid       = "TransformDemoParamsRead"
     actions   = ["ssm:GetParameter", "ssm:GetParameters", "ssm:GetParametersByPath"]
     resources = [local.param_arn_prefix]
   }
 
   statement {
-    sid       = "FbctfLogsWrite"
+    sid       = "TransformDemoLogsWrite"
     actions   = ["logs:CreateLogStream", "logs:PutLogEvents", "logs:DescribeLogStreams"]
     resources = ["${local.logs_arn_prefix}:*"]
   }

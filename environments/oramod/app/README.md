@@ -12,4 +12,4 @@ Spring Boot MVC + Thymeleaf UI: product list, per-category summary (from the vie
 add-product and restock (through the PL/SQL package). JSON at `/api/products`.
 
 Built on the app host at boot from `app.zip` (staged in the artifacts bucket by
-`archive_file`), run by systemd against `fbctf-oramod-oracle`.
+`archive_file`), run by systemd against `transform-demo-oramod-oracle`.

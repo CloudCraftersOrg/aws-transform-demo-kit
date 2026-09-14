@@ -191,12 +191,33 @@ Review with `git diff`. Output is in-place git commits; no PR.
 
 ## Phase 6 — teardown
 
+Order matters: the collector root holds the peering connections and the routes
+it injected into the sqlmod / oramod route tables, so it goes first.
+
 ```sh
 make destroy ENV=discovery-collector   # if it was applied in Phase 1
 make destroy ENV=sqlmod
 make destroy ENV=oramod
 aws s3 rb s3://fbctf-transform-src-337058058699-use1 --force
 ```
+
+Gotchas seen on the 2026-09-14 teardown:
+
+- **Stopped hosts break the collector's plan.** Its `data.aws_instance.*`
+  lookups filter on `instance-state-name = running`, so with the sqlmod /
+  oramod boxes stopped the destroy fails with `no matching EC2 Instance found`.
+  Pass `-var discover_sqlmod=false -var discover_oramod=false`; destroy mode
+  still removes every peering / route in state.
+- **`terraform.tfvars` is gitignored.** On a fresh clone supply `owner` (and
+  `transform_ro_password` for sqlmod — any placeholder, it only feeds the
+  now-deleted login) with `-var` or `TF_VAR_*`.
+- **Other projects may hold the hosts as sources.** Check
+  `aws mgn describe-source-servers` and the Transform console before you
+  destroy: replication agents on these boxes leave orphaned MGN source servers
+  and running replication servers behind, which this repo does not manage.
+- The three roots' buckets are `force_destroy = true`; only
+  `fbctf-demo-tfstate` (keeps the retired `fbctf-demo/` key) and the
+  `environments/artifacts` bucket survive on purpose.
 
 Also delete: the Transform-created DMS / Aurora / ECS resources from the SQL
 Server and Oracle jobs; the VMware discovery connector. **Keep

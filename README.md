@@ -4,6 +4,8 @@ An **AWS Transform demo kit** for the **legacy "before" state** — the estate
 Transform migrates. The modernized target (Fargate, Aurora) is Transform's
 output, not this repo's.
 
+![Architecture of the demo kit: the repo, what it deploys into the sandbox account, and what each part feeds on the AWS Transform side](assets/transform-demo-kit-architecture.png)
+
 | Part | What it is | Deployed? | Cost |
 |---|---|---|---|
 | **The assessment inventory** (`inventory/`) | A server portfolio as data → `generate.py` → one assessment ZIP | No — data | `$0` |

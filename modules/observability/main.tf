@@ -1,5 +1,5 @@
 # Observability (§3.8): log groups the CloudWatch agent ships into (instance
-# roles allow CreateLogStream/PutLogEvents on /fbctf/* — groups must exist
+# roles allow CreateLogStream/PutLogEvents on /transform-demo/* — groups must exist
 # because the roles deliberately lack CreateLogGroup), plus the minimal alarm
 # set. Alarms have no actions (no SNS topic in demo scope) — they exist to be
 # visible in the console during demos.
@@ -7,7 +7,7 @@
 resource "aws_cloudwatch_log_group" "this" {
   for_each = toset(["hhvm", "nginx", "user-data"])
 
-  name              = "/fbctf/${each.key}"
+  name              = "/transform-demo/${each.key}"
   retention_in_days = 7
 }
 

@@ -3,7 +3,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project   = "fbctf-demo"
+      Project   = "transform-demo"
       Env       = "sqlmod"
       Owner     = var.owner
       ManagedBy = "terraform"

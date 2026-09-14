@@ -24,7 +24,7 @@ apt-get install -y curl unzip jq ca-certificates apt-transport-https software-pr
 curl -sSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscli.zip
 unzip -q /tmp/awscli.zip -d /tmp && /tmp/aws/install
 
-param() { aws ssm get-parameter --name "/fbctf/$1" --query Parameter.Value --output text --region "$REGION"; }
+param() { aws ssm get-parameter --name "/transform-demo/$1" --query Parameter.Value --output text --region "$REGION"; }
 NLB_DNS=$(param nlb_dns)
 
 # --- prebuilt app tarball ---
@@ -91,9 +91,9 @@ curl -s -o /tmp/index.html -w '%%{http_code}' http://localhost/index.php | grep 
   dpkg -i /tmp/cwagent.deb
   cat > /opt/aws/amazon-cloudwatch-agent/etc/cw-config.json <<CFG
 {"logs":{"logs_collected":{"files":{"collect_list":[
-  {"file_path":"/var/log/nginx/error.log","log_group_name":"/fbctf/nginx","log_stream_name":"error-{instance_id}"},
-  {"file_path":"/var/log/nginx/access.log","log_group_name":"/fbctf/nginx","log_stream_name":"access-{instance_id}"},
-  {"file_path":"/var/log/user-data.log","log_group_name":"/fbctf/user-data","log_stream_name":"web-{instance_id}"}
+  {"file_path":"/var/log/nginx/error.log","log_group_name":"/transform-demo/nginx","log_stream_name":"error-{instance_id}"},
+  {"file_path":"/var/log/nginx/access.log","log_group_name":"/transform-demo/nginx","log_stream_name":"access-{instance_id}"},
+  {"file_path":"/var/log/user-data.log","log_group_name":"/transform-demo/user-data","log_stream_name":"web-{instance_id}"}
 ]}}}}
 CFG
   /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \

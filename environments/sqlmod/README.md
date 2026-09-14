@@ -10,10 +10,10 @@ the DMS replication instance Transform creates in this VPC.
 | | |
 |---|---|
 | VPC (`modules/network`) | `10.40.0.0/16`, **2-AZ** subnets (the DMS replication subnet group needs ≥2 AZs) |
-| SQL Server | `fbctf-sqlmod-sqlserver`, `t3.medium` AL2023 running the official `mssql/server:2022` container; loads `modernization/sqlserver-schema/*.sql` (DB `Scoreboard`) and creates the `transform_ro` login (`VIEW DEFINITION` + `VIEW DATABASE STATE`). `sa` in Secrets Manager `fbctf-sqlmod/sa`. |
-| Contoso Scoreboard | `fbctf-sqlmod-app`, Windows Server 2022 + IIS, **ASP.NET Web Forms on .NET Framework 4.8** ([`app/`](app/)). Public EIP on `:80` (`app_allow_cidr`). WinRM + a `discovery` local admin for the discovery tool (secret `fbctf-sqlmod/app-winrm`). |
-| Project Nami | `fbctf-sqlmod-wordpress`, Ubuntu 22.04 + Apache + PHP `pdo_sqlsrv`, **WordPress on SQL Server**. Public EIP on `:80` (`wordpress_allow_cidr`). Admin login in `fbctf-sqlmod/wordpress-admin`. |
-| S3 bucket `fbctf-sqlmod-schema-*` | staging for the schema files and the app zip |
+| SQL Server | `transform-demo-sqlmod-sqlserver`, `t3.medium` AL2023 running the official `mssql/server:2022` container; loads `modernization/sqlserver-schema/*.sql` (DB `Scoreboard`) and creates the `transform_ro` login (`VIEW DEFINITION` + `VIEW DATABASE STATE`). `sa` in Secrets Manager `transform-demo-sqlmod/sa`. |
+| Contoso Scoreboard | `transform-demo-sqlmod-app`, Windows Server 2022 + IIS, **ASP.NET Web Forms on .NET Framework 4.8** ([`app/`](app/)). Public EIP on `:80` (`app_allow_cidr`). WinRM + a `discovery` local admin for the discovery tool (secret `transform-demo-sqlmod/app-winrm`). |
+| Project Nami | `transform-demo-sqlmod-wordpress`, Ubuntu 22.04 + Apache + PHP `pdo_sqlsrv`, **WordPress on SQL Server**. Public EIP on `:80` (`wordpress_allow_cidr`). Admin login in `transform-demo-sqlmod/wordpress-admin`. |
+| S3 bucket `transform-demo-sqlmod-schema-*` | staging for the schema files and the app zip |
 
 `1433` is open to the whole VPC CIDR, so Transform's DMS instance reaches it
 wherever Transform places it. SSH / WinRM are open only to `discovery_cidr`

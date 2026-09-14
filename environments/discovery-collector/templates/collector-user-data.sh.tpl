@@ -11,10 +11,10 @@ shutdown -h +${max_minutes} "discovery collector max lifetime"
 %{ endif ~}
 
 mkdir -p /opt/discovery
-cat >/opt/discovery/fbctf-discovery.pem <<'PEM'
+cat >/opt/discovery/transform-demo-discovery.pem <<'PEM'
 ${ssh_key_pem}
 PEM
-chmod 600 /opt/discovery/fbctf-discovery.pem
+chmod 600 /opt/discovery/transform-demo-discovery.pem
 
 cat >/opt/discovery/import.csv <<'CSV'
 ${import_csv}
@@ -36,5 +36,5 @@ systemctl is-active discovery-tool || true
 
 IP=$(curl -fsS -H "X-aws-ec2-metadata-token: $(curl -fsS -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 60')" http://169.254.169.254/latest/meta-data/local-ipv4)
 echo "discovery tool ready — UI at https://$IP:5000"
-echo "  SSH key : /opt/discovery/fbctf-discovery.pem   (user: ec2-user for the fleet + AL2023 hosts, ubuntu for Project Nami)"
+echo "  SSH key : /opt/discovery/transform-demo-discovery.pem   (user: ec2-user for the fleet + AL2023 hosts, ubuntu for Project Nami)"
 echo "  import  : /opt/discovery/import.csv"

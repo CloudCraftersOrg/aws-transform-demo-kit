@@ -30,7 +30,7 @@ Goal         : Produce a Terraform module `environments/after/` that deploys the
                  - Application Load Balancer, HTTPS via ACM, WAF managed rules
                  - Secrets Manager for the DB credential, injected as a task secret
                  - CloudWatch log group, container insights
-                 - all names prefixed fbctf-after-
+                 - all names prefixed transform-demo-after-
 Constraints  : match this repo's module style (thin wrappers over
                terraform-aws-modules/*), pin every version, no hardcoded account
                IDs, `terraform fmt` + `validate` clean.
@@ -52,11 +52,11 @@ cd /tmp/dotnet8 && git init -q && git add -A && git commit -qm init
 AWS_PROFILE=personal-transform AWS_REGION=us-east-1 atx
 #   > "create a transformation definition to generate the target Terraform
 #   >  described in /…/modernization/atx-task.md; reference that file"
-atx custom def save-draft -n fbctf-after-terraform \
+atx custom def save-draft -n transform-demo-after-terraform \
   --description "target IaC for the modernized scoreboard" --sd <definition-dir>
 
 # 2. run it
-atx custom def exec -n fbctf-after-terraform -p /tmp/dotnet8 -x -t --limit 30
+atx custom def exec -n transform-demo-after-terraform -p /tmp/dotnet8 -x -t --limit 30
 git -C /tmp/dotnet8 diff <first-commit>       # review
 ```
 

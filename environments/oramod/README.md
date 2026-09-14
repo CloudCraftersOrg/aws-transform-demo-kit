@@ -15,9 +15,9 @@ legacy enterprise workload for AWS Transform, and a three-way target:
 | | |
 |---|---|
 | VPC (`modules/network`) | `10.50.0.0/16`, **2-AZ** subnets (Transform's DMS replication subnet group needs ≥2 AZs) |
-| Oracle | `fbctf-oramod-oracle`, `t3.medium` AL2023 running `gvenzl/oracle-xe:21-slim`; loads [`schema/`](schema/) into PDB `XEPDB1`, creates the `catalog` app user and the `transform_ro` reader. `sys` in Secrets Manager `fbctf-oramod/oracle-sys`; app + `transform_ro` credentials in `fbctf-oramod/catalog-app`. |
-| Contoso Catalog | `fbctf-oramod-app`, `t3.small` AL2023, systemd-run Spring Boot jar built at boot from [`app/`](app/). Public EIP on `:80` (`app_allow_cidr`). Thymeleaf UI + JSON at `/api/products`. |
-| S3 bucket `fbctf-oramod-artifacts-*` | staging for the schema files and `app.zip` |
+| Oracle | `transform-demo-oramod-oracle`, `t3.medium` AL2023 running `gvenzl/oracle-xe:21-slim`; loads [`schema/`](schema/) into PDB `XEPDB1`, creates the `catalog` app user and the `transform_ro` reader. `sys` in Secrets Manager `transform-demo-oramod/oracle-sys`; app + `transform_ro` credentials in `transform-demo-oramod/catalog-app`. |
+| Contoso Catalog | `transform-demo-oramod-app`, `t3.small` AL2023, systemd-run Spring Boot jar built at boot from [`app/`](app/). Public EIP on `:80` (`app_allow_cidr`). Thymeleaf UI + JSON at `/api/products`. |
+| S3 bucket `transform-demo-oramod-artifacts-*` | staging for the schema files and `app.zip` |
 
 `1521` is open to the whole VPC CIDR for Transform's DMS instance. SSH and
 Oracle Net are also open to `discovery_cidr` (the discovery-collector VPC) so

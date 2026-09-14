@@ -23,7 +23,7 @@ apt-get install -y curl unzip jq ca-certificates apt-transport-https \
 curl -sSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscli.zip
 unzip -q /tmp/awscli.zip -d /tmp && /tmp/aws/install
 
-param() { aws ssm get-parameter --name "/fbctf/$1" --query Parameter.Value --output text --region "$REGION"; }
+param() { aws ssm get-parameter --name "/transform-demo/$1" --query Parameter.Value --output text --region "$REGION"; }
 secret() { aws secretsmanager get-secret-value --secret-id "$1" --query SecretString --output text --region "$REGION"; }
 
 DB_HOST=$(param db_endpoint)
@@ -60,7 +60,7 @@ if ! run_provision; then
 fi
 
 # --- settings.ini with real credentials (provision wrote ctf/ctf) ---
-sed -e "s/DBHOST/$DB_HOST/g" -e "s/DATABASE/fbctf/g" \
+sed -e "s/DBHOST/$DB_HOST/g" -e "s/DATABASE/transform-demo/g" \
     -e "s/MYUSER/$APP_USER/g" -e "s/MYPWD/$APP_PW/g" -e "s/MCHOST/$MC_HOST/g" \
     "$CTF_PATH/extra/settings.ini.example" > "$CTF_PATH/settings.ini"
 chown www-data:www-data "$CTF_PATH/settings.ini"
@@ -117,8 +117,8 @@ ss -lnt | grep -q ':9000 ' || (echo "HHVM not listening on 9000" && exit 1)
   dpkg -i /tmp/cwagent.deb
   cat > /opt/aws/amazon-cloudwatch-agent/etc/cw-config.json <<CFG
 {"logs":{"logs_collected":{"files":{"collect_list":[
-  {"file_path":"/var/log/hhvm/error.log","log_group_name":"/fbctf/hhvm","log_stream_name":"{instance_id}"},
-  {"file_path":"/var/log/user-data.log","log_group_name":"/fbctf/user-data","log_stream_name":"app-{instance_id}"}
+  {"file_path":"/var/log/hhvm/error.log","log_group_name":"/transform-demo/hhvm","log_stream_name":"{instance_id}"},
+  {"file_path":"/var/log/user-data.log","log_group_name":"/transform-demo/user-data","log_stream_name":"app-{instance_id}"}
 ]}}}}
 CFG
   /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \

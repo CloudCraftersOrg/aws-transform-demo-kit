@@ -55,10 +55,10 @@ output "next_steps" {
        aws ssm send-command --instance-ids ${data.aws_instance.sqlmod_wordpress[0].id} --document-name AWS-RunShellScript \
          --parameters "commands=[\"echo $PUB >> /home/ubuntu/.ssh/authorized_keys\"]"   # Ubuntu -> ubuntu
        The Contoso app host (Windows) is collected over WinRM: add a WinRM credential,
-       user 'discovery', password from Secrets Manager fbctf-sqlmod/app-winrm.
+       user 'discovery', password from Secrets Manager transform-demo-sqlmod/app-winrm.
        %{endif~}
 
-    3. In the UI: Credentials -> add SSH key /opt/discovery/fbctf-discovery.pem
+    3. In the UI: Credentials -> add SSH key /opt/discovery/transform-demo-discovery.pem
        for user 'ec2-user', and a second for user 'ubuntu'. Then add a
        "Server import" source with /opt/discovery/import.csv.
 

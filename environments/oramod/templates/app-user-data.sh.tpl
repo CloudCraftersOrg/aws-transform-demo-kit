@@ -54,4 +54,4 @@ for i in $(seq 1 30); do
   echo "waiting for catalog ($i/30)"; sleep 10
 done
 IP=$(curl -fsS -H "X-aws-ec2-metadata-token: $(curl -fsS -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 60')" http://169.254.169.254/latest/meta-data/public-ipv4)
-echo "catalog ready $(date -u +%FT%TZ) - http://$IP/  (editor login: editor / see fbctf-oramod/catalog-app)"
+echo "catalog ready $(date -u +%FT%TZ) - http://$IP/  (editor login: editor / see transform-demo-oramod/catalog-app)"

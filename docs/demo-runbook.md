@@ -13,8 +13,8 @@ Feature coverage + costs: [`transform-feature-coverage.md`](transform-feature-co
 | `environments/sqlmod` | SQL Server 2022 on EC2 + **Contoso Scoreboard** (.NET Framework 4.8 / IIS) + **Project Nami** (WordPress on SQL Server). `terraform -chdir=environments/sqlmod output` gives `sql_server_address`, `database_name` (`Scoreboard`), `transform_login` (`transform_ro`, password in `environments/sqlmod/terraform.tfvars`), `vpc_id`, `dms_subnet_ids`, `app_url`, `wordpress_url` |
 | `environments/oramod` | Oracle 21c XE on EC2 + **Contoso Catalog** (Java 8 / Spring Boot 2.7). Outputs: `oracle_address` (`:1521`, PDB `XEPDB1`), `transform_ro_user`, `app_secret_arn` (holds the `transform_ro` password), `vpc_id`, `dms_subnet_ids`, `app_url` |
 | `environments/discovery-collector` | optional — the real discovery tool; only for Phase 1 step 9 |
-| Source bucket | `s3://fbctf-transform-src-337058058699-use1/` — holds `contoso-scoreboard-src.zip` (from `environments/sqlmod/app`), `dotnet-scoreboard-src.zip`, `java-catalog-src.zip`, `cobol-rollup-src.zip` |
-| Assessment inputs | `inventory/out/fbctf-assessment.zip`, `inventory/out/fbctf-vmware-import.zip` (run `python3 inventory/generate.py --vmware` to refresh) and the committed `inventory/discovery_tool_export.zip` |
+| Source bucket | `s3://transform-demo-src-337058058699-use1/` — holds `contoso-scoreboard-src.zip` (from `environments/sqlmod/app`), `dotnet-scoreboard-src.zip`, `java-catalog-src.zip`, `cobol-rollup-src.zip` |
+| Assessment inputs | `inventory/out/transform-demo-assessment.zip`, `inventory/out/transform-demo-vmware-import.zip` (run `python3 inventory/generate.py --vmware` to refresh) and the committed `inventory/discovery_tool_export.zip` |
 | `atx` CLI | v3.12.0, `AWS/java-version-upgrade` in the registry; JDK 17 + Maven on the machine |
 
 ## Three live apps, on purpose
@@ -37,7 +37,11 @@ need a live host.
 2. Console (account 337058058699) → **AWS Transform** (us-east-1) → open the **Web application URL**.
 3. **Workspaces** → **Create workspace** → open it.
 4. Confirm the CLI: `AWS_PROFILE=personal-transform atx custom def list` — lists the AWS-managed transformations.
-5. Deploy the stack (~15 min, both in parallel):
+5. First time in the account only: create the state bucket (README → *One-time bootstrap*), then the source-code bucket the jobs read from:
+   ```sh
+   aws s3 mb s3://transform-demo-src-337058058699-use1 --region us-east-1
+   ```
+6. Deploy the stack (~15 min, both in parallel):
    ```sh
    make apply ENV=sqlmod
    make apply ENV=oramod
@@ -48,8 +52,8 @@ need a live host.
 ## Phase 1 — Migration assessment · features 1–6 + the "un-modernizable" close · **$0**
 
 1. Workspace **Chat**: `create a job` → choose **Migration assessment**.
-2. Job Plan → **Discover on-premises data**. When the **Collaboration pane** prompts for data, upload **`inventory/out/fbctf-assessment.zip`**.
-   *If the ZIP is rejected: it also contains `ASSESSMENT_INTENT.md`; re-zip with just the two CSVs (`cd inventory/out && zip fbctf-assessment.zip mpa_servers.csv network_connections.csv`) and retry. The connections file is only read because it's zipped with the servers file.*
+2. Job Plan → **Discover on-premises data**. When the **Collaboration pane** prompts for data, upload **`inventory/out/transform-demo-assessment.zip`**.
+   *If the ZIP is rejected: it also contains `ASSESSMENT_INTENT.md`; re-zip with just the two CSVs (`cd inventory/out && zip transform-demo-assessment.zip mpa_servers.csv network_connections.csv`) and retry. The connections file is only read because it's zipped with the servers file.*
 3. Paste the contents of **`inventory/ASSESSMENT_INTENT.md`** into chat.
 4. Expand **Inventory readiness summary**: 14 servers; OS end-of-support breakdown (Ubuntu 16.04 ×3, Windows Server 2012 R2, RHEL 7); dependency graph from the 18 edges. Adjust with **Manage inventory scope** if wanted.
 5. Chat, one prompt at a time:
@@ -75,7 +79,7 @@ need a live host.
 
 ## Phase 2 — .NET Framework → .NET 8 · feature 7 · **$0** · **run before Phase 4**
 
-1. Package the deployed app (see `environments/sqlmod/app/README.md`) → `s3://fbctf-transform-src-337058058699-use1/contoso-scoreboard-src.zip`. *(The richer undeployed fixture, `dotnet-scoreboard-src.zip`, works the same way.)*
+1. Package the deployed app (see `environments/sqlmod/app/README.md`) → `s3://transform-demo-src-337058058699-use1/contoso-scoreboard-src.zip`. *(The richer undeployed fixture, `dotnet-scoreboard-src.zip`, works the same way.)*
 2. Chat: `create a job` → **.NET modernization**.
 3. **Get resources to be transformed** → **Connect a source code repository** → **Amazon S3** → the zip (one top-level folder containing `ContosoScoreboard.sln`).
 4. Review discovery → the **transformation plan** → approve. Web Forms has no .NET Core successor, so expect the plan to call out a Razor Pages / Blazor port alongside `System.Data.SqlClient` → `Microsoft.Data.SqlClient` and `web.config` → `appsettings.json`.
@@ -110,7 +114,7 @@ does **not** push or open a PR.
 ### 9 · Mainframe / COBOL → Java · web job · $0
 
 1. Chat: `create a job` → **Mainframe modernization**.
-2. Source → **Amazon S3** → `s3://fbctf-transform-src-337058058699-use1/cobol-rollup-src.zip`.
+2. Source → **Amazon S3** → `s3://transform-demo-src-337058058699-use1/cobol-rollup-src.zip`.
 3. Objective: `analyze and refactor this COBOL batch to Java`.
 4. Walk the human-in-the-loop gates: code analysis → technical documentation → business-logic extraction → domain decomposition → wave plan → COBOL→Java (+ optional Reforge pass) → target IaC.
    The fixture: `ROLLUP.cbl` (`COMP-3`, `OCCURS`, `SEARCH`, `PERFORM … THRU`, `GO TO`), 2 copybooks, a shell "JCL", fixed-width `scores.dat`.
@@ -133,11 +137,11 @@ AWS_PROFILE=personal-transform AWS_REGION=us-east-1 atx        # interactive
 # > "Create a transformation definition that reads a modernized .NET project and
 # >  emits a Terraform module for its target: ECS Fargate (2 tasks/2 AZs, ARM64),
 # >  Aurora PostgreSQL Serverless v2, ALB + ACM + WAF, Secrets Manager, all names
-# >  fbctf-after-*. Reference: <repo>/modernization/atx-task.md"
+# >  transform-demo-after-*. Reference: <repo>/modernization/atx-task.md"
 # > (test, iterate, then:)
-atx custom def save-draft -n fbctf-after-terraform --description "target IaC for the modernized scoreboard" --sd <definition-dir>
+atx custom def save-draft -n transform-demo-after-terraform --description "target IaC for the modernized scoreboard" --sd <definition-dir>
 
-atx custom def exec -n fbctf-after-terraform -p /tmp/dotnet8 -x -t --limit 30
+atx custom def exec -n transform-demo-after-terraform -p /tmp/dotnet8 -x -t --limit 30
 ```
 Review with `git diff`. Output is in-place git commits; no PR.
 
@@ -183,7 +187,7 @@ Review with `git diff`. Output is in-place git commits; no PR.
 
 1. Console → **Connectors** → add a **discovery account connector** (account 337058058699, us-east-1) → **copy the verification link** → approve it (creates an S3 bucket for discovery data). *If approval needs an AWS admin, ask @santiacmaestre.*
 2. Chat: `create a job` → **Migrations (including VMware)** → job sub-type **Discovery and migration planning** (steps: Perform discovery → Build migration plan — **no** target-account connector, no replication).
-3. **Perform discovery** → upload **`inventory/out/fbctf-vmware-import.zip`** → **Inventory readiness summary** (14 servers, `Hypervisor = VMware ESXi 7.0`, ESXi host / cluster / datastore fields).
+3. **Perform discovery** → upload **`inventory/out/transform-demo-vmware-import.zip`** → **Inventory readiness summary** (14 servers, `Hypervisor = VMware ESXi 7.0`, ESXi host / cluster / datastore fields).
 4. **Build migration plan** → AI network / VPC design → application grouping → **wave plan** → migration runbook. **Stop here** — cutover needs running source VMs.
 5. Delete the discovery connector when done.
 
@@ -198,7 +202,7 @@ it injected into the sqlmod / oramod route tables, so it goes first.
 make destroy ENV=discovery-collector   # if it was applied in Phase 1
 make destroy ENV=sqlmod
 make destroy ENV=oramod
-aws s3 rb s3://fbctf-transform-src-337058058699-use1 --force
+aws s3 rb s3://transform-demo-src-337058058699-use1 --force
 ```
 
 Gotchas seen on the 2026-09-14 teardown:
@@ -215,9 +219,9 @@ Gotchas seen on the 2026-09-14 teardown:
   `aws mgn describe-source-servers` and the Transform console before you
   destroy: replication agents on these boxes leave orphaned MGN source servers
   and running replication servers behind, which this repo does not manage.
-- The three roots' buckets are `force_destroy = true`; only
-  `fbctf-demo-tfstate` (keeps the retired `fbctf-demo/` key) and the
-  `environments/artifacts` bucket survive on purpose.
+- The three roots' buckets are `force_destroy = true`; only the
+  `transform-demo-tfstate` bucket and the `environments/artifacts` bucket
+  survive on purpose.
 
 Also delete: the Transform-created DMS / Aurora / ECS resources from the SQL
 Server and Oracle jobs; the VMware discovery connector. **Keep

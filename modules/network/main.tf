@@ -1,4 +1,4 @@
-# Network for the fbctf demo: 1 VPC, 2 AZs, three subnet tiers, single NAT.
+# Network for the transform demo estates: 1 VPC, 2 AZs, three subnet tiers, single NAT.
 # Thin wrapper around terraform-aws-modules/vpc (see requirements doc §3.1).
 #   - public:        ALB + NAT gateway
 #   - private (app): nginx tier + HHVM tier

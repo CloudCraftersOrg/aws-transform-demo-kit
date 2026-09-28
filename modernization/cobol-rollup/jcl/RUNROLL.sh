@@ -36,5 +36,5 @@ if [ "$RC" -ne 0 ]; then
 fi
 
 echo "STEP040 PUBLISH"
-aws s3 cp "${TEAMOUT}" "s3://fbctf-demo-artifacts-337058058699-use1/batch/team-totals-$(date -u +%Y%m%d).dat" || true
+aws s3 cp "${TEAMOUT}" "s3://transform-demo-artifacts-337058058699-use1/batch/team-totals-$(date -u +%Y%m%d).dat" || true
 cat "${RPTOUT}"

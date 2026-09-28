@@ -1,7 +1,6 @@
-# Artifacts bucket for the fbctf demo: pinned+patched app tarballs, vendored
-# packages (HHVM .debs, Node tarball, composer.phar) and SQL files. Objects are
-# uploaded by scripts/build-artifacts.sh, not Terraform — multi-hundred-MB
-# binaries don't belong in state. See requirements doc §3.6.
+# Persistent, versioned bucket for the transform demo: anything that must
+# outlive a `terraform destroy` of the on-demand roots (batch outputs, exports,
+# packaged sources). Objects are uploaded by scripts and jobs, not Terraform.
 
 resource "aws_s3_bucket" "artifacts" {
   bucket = var.bucket_name

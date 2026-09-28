@@ -1,5 +1,7 @@
 # Artifacts manifest — s3://fbctf-demo-artifacts-337058058699-use1
 
+> **fbctf-era bucket.** Everything below belongs to the retired fbctf app ([ADR 006](decisions/006-retire-fbctf.md)). The bucket is outside the `transform-demo-*` scope after [ADR 007](decisions/007-transform-demo-prefix.md) and is slated for deletion; the live artifacts bucket is `transform-demo-artifacts-337058058699-use1`.
+
 Built 2026-08-27. App source of truth: **CloudCraftersOrg/fbctf** —
 facebookarchive history with the five 2026 keep-alive patches as commits on
 top of upstream `4ec9b6b` (NodeSource key, grunt pins local+global, unison

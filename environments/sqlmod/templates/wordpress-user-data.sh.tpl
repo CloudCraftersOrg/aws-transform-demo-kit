@@ -173,4 +173,4 @@ UNIT
 systemctl daemon-reload
 systemctl enable --now wp-warm.service wp-http-warm.service
 
-echo "project nami ready $(date -u +%FT%TZ) - $SITE/  (admin / fbctf-sqlmod/wordpress-admin)"
+echo "project nami ready $(date -u +%FT%TZ) - $SITE/  (admin / transform-demo-sqlmod/wordpress-admin)"

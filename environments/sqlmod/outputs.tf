@@ -12,7 +12,7 @@ output "database_name" {
 }
 
 output "sa_secret_arn" {
-  description = "Secrets Manager secret holding the sa login (fbctf-sqlmod/sa)"
+  description = "Secrets Manager secret holding the sa login (transform-demo-sqlmod/sa)"
   value       = aws_secretsmanager_secret.sa.arn
 }
 
@@ -50,7 +50,7 @@ output "app_instance_id" {
 }
 
 output "wordpress_url" {
-  description = "Project Nami (WordPress on SQL Server). Admin login in fbctf-sqlmod/wordpress-admin."
+  description = "Project Nami (WordPress on SQL Server). Admin login in transform-demo-sqlmod/wordpress-admin."
   value       = var.deploy_wordpress ? "http://${aws_eip.wordpress[0].public_ip}/" : null
 }
 

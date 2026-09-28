@@ -4,6 +4,8 @@ An **AWS Transform demo kit** for the **legacy "before" state** — the estate
 Transform migrates. The modernized target (Fargate, Aurora) is Transform's
 output, not this repo's.
 
+![Architecture of the demo kit: the repo, what it deploys into the sandbox account, and what each part feeds on the AWS Transform side](assets/transform-demo-kit-architecture.png)
+
 | Part | What it is | Deployed? | Cost |
 |---|---|---|---|
 | **The assessment inventory** (`inventory/`) | A server portfolio as data → `generate.py` → one assessment ZIP | No — data | `$0` |
@@ -20,71 +22,50 @@ Decisions are recorded in [`docs/decisions/`](docs/decisions/); the S3 artifact 
 
 ---
 
-## The retired fbctf live app
+## Deploying
 
-> **Retired 2026-09-01 ([ADR 006](docs/decisions/006-retire-fbctf.md)).** `environments/demo`
-> and its state are gone; `fbctf-aws-requirements.md` and the sections below are
-> history. fbctf had no Transform code path and was MySQL-locked — the
-> `environments/sqlmod` estate replaced it as the live app.
-
-### Architecture
-
-![fbctf on AWS — architecture](assets/fbctf-aws-architecture.png)
-
-<details>
-<summary>Text summary</summary>
-
-```
-Internet → ALB (HTTP:80, public subnets)
-  → nginx ASG (private-app subnets)
-    → internal NLB (TCP:9000, FastCGI)
-      → HHVM ASG (private-app subnets)
-        → RDS MySQL 8.0 + ElastiCache memcached (private-data subnets)
-```
-
-</details>
-
-- Account `337058058699` (Sandbox, `cloudcrafters-sandbox` profile with the `AWSTransformAccess` permission set), region `us-east-1` — colocated with the AWS Transform workspace.
-- All resource names carry the `fbctf-` prefix — the deploy permission set scopes IAM, S3, and Secrets Manager writes to `fbctf-*`.
-- No SSH — instance access via SSM Session Manager only.
-- Boot-time provisioning from a pinned, pre-patched app tarball in S3 (ADR 001). Four upstream breakages are patched in the tarball (`scripts/make-source-tarball.sh`).
+- Account `337058058699` (Sandbox), profile `cloudcrafters-sandbox` with the `AWSTransformAccess` permission set, region `us-east-1` — colocated with the AWS Transform workspace.
+- **Every resource name carries the `transform-demo-` prefix** ([ADR 007](docs/decisions/007-transform-demo-prefix.md)). The permission set scopes IAM, S3 and Secrets Manager writes to that prefix through the `demo_app_prefix` variable in the `aws-access` repo; anything named otherwise hits a denial.
+- No SSH to the estate hosts — SSM Session Manager (the discovery collector is the exception: it SSHes into the fleet it inventories).
 
 ### Layout
 
-Independent roots, each with its own state key in bucket `fbctf-demo-tfstate-337058058699-use1` (native S3 locking, no DynamoDB):
+Independent roots, each with its own state key in bucket `transform-demo-tfstate-337058058699-use1` (native S3 locking, no DynamoDB):
 
 | Root | State key | Contents |
 |---|---|---|
-| `environments/demo` | `fbctf-demo/terraform.tfstate` | **Retired** — the root is deleted and the state key is empty |
-| `environments/artifacts` | `fbctf-artifacts/terraform.tfstate` | The artifacts bucket only — **survives destroy cycles** (it held the insurance against dead upstream repos) |
+| `environments/sqlmod` | `sqlmod/terraform.tfstate` | The SQL Server estate — on demand |
+| `environments/oramod` | `oramod/terraform.tfstate` | The Oracle estate — on demand |
+| `environments/discovery-collector` | `discovery-collector/terraform.tfstate` | The discovery tool + fleet — on demand, self-terminating |
+| `environments/artifacts` | `artifacts/terraform.tfstate` | One persistent, versioned bucket (`transform-demo-artifacts-…`) for things that must outlive a destroy cycle |
 
-### Runbook
+### One-time bootstrap
+
+The state bucket is created by hand, once per account, before the first `make init`:
 
 ```sh
-make init
-make plan
-make apply      # ~12 min of applies; app tier healthy ≈4 min later, web ≈5 min after that
-make destroy    # ALWAYS after a demo session — the app runs an EOL OS
+export AWS_PROFILE=cloudcrafters-sandbox
+B=transform-demo-tfstate-337058058699-use1
+aws s3api create-bucket --bucket $B --region us-east-1
+aws s3api put-bucket-versioning --bucket $B --versioning-configuration Status=Enabled
+aws s3api put-bucket-encryption --bucket $B --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
+aws s3api put-public-access-block --bucket $B --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 ```
 
-- **Demo URL**: `alb_dns_name` output. Expect the Facebook CTF login page over plain HTTP.
-- **Admin login**: user `admin`; password:
-  `aws secretsmanager get-secret-value --secret-id fbctf-demo/admin-password --profile cloudcrafters-sandbox --query SecretString`
-- **Shell access**: `aws ssm start-session --target <instance-id> --profile cloudcrafters-sandbox`
-- **Boot debugging**: `/var/log/user-data.log` on the instance, also shipped to the `/fbctf/user-data` CloudWatch log group. HHVM errors → `/fbctf/hhvm`; nginx → `/fbctf/nginx`.
-- **Alarms** (no actions wired — console-visible only): ALB 5xx, unhealthy hosts on both target groups, RDS CPU/storage.
-- **Full rebuild of artifacts** (only needed if the pinned commit or patches change): `scripts/make-source-tarball.sh`, then launch a builder with `scripts/builder-userdata.sh` (see script headers).
+Then `make init ENV=<root>` / `make apply ENV=<root>`; `make destroy ENV=<root>` after every session. The Transform source-code bucket (`transform-demo-src-337058058699-use1`) is created in Phase 0 of the [runbook](docs/demo-runbook.md).
 
-### Boot sequence after `make apply`
+### The retired fbctf live app
 
-1. RDS + ElastiCache come up during the apply itself (~7 min).
-2. App instance boots: prebuilt tarball → `provision.sh` (hhvm) → settings.ini → guarded DB bootstrap (schema + app user + admin row, one-shot) → HHVM on :9000 → NLB healthy (~4 min).
-3. Web instance boots: prebuilt tarball → `provision.sh` (nginx: Node 6, npm, grunt) → HTTP-only site config pointing FastCGI at the NLB → ALB healthy (~5 min).
-4. Scoreboard serves at the ALB DNS.
-
-### ⚠️ Destroy discipline
-
-The instances run Ubuntu 16.04 (EOL, unpatched) by design — that's the point of the demo. Do not leave this running unattended. `make destroy` after every session (~$5/day if left up). The artifacts root is not touched by destroy; re-apply brings the scoreboard back in ~20 minutes with the same admin password reachable via Secrets Manager.
+fbctf (Hack/HHVM, nginx, MySQL, memcached) was the first "before" state and was
+retired on 2026-09-01 ([ADR 006](docs/decisions/006-retire-fbctf.md)): no
+Transform code path, MySQL-locked. Its history stays in
+[`fbctf-aws-requirements.md`](fbctf-aws-requirements.md), the
+[architecture brief](docs/architecture-diagram-brief.md) and diagram
+(`assets/fbctf-aws-architecture.png`), ADRs 001–003 and 006, the
+[artifacts manifest](docs/artifacts-manifest.md), and the unwired `modules/`
+(`alb-external`, `cache`, `config`, `database`, `iam`, `nlb-internal`,
+`observability`, `security`, `service-tier`, `flow-log`, `vpc-endpoints`) plus
+`scripts/`. None of it deploys.
 
 ---
 
@@ -96,7 +77,7 @@ assessment ZIP. It costs nothing and is never deployed.
 
 ```sh
 python3 -m pip install -r inventory/requirements.txt
-python3 inventory/generate.py          # -> inventory/out/fbctf-assessment.zip
+python3 inventory/generate.py          # -> inventory/out/transform-demo-assessment.zip
 ```
 
 Details, and what each server is there to trigger: [`inventory/README.md`](inventory/README.md).
@@ -123,7 +104,7 @@ Source only — nothing here is deployed. See [`modernization/README.md`](modern
 ## The live estate
 
 Three real applications on two database engines, in two on-demand roots. State
-keys `fbctf-sqlmod/` and `fbctf-oramod/` in the same bucket as above.
+keys `sqlmod/` and `oramod/` in the same bucket as above.
 
 | Root | Database | Apps | Transform jobs it feeds |
 |---|---|---|---|

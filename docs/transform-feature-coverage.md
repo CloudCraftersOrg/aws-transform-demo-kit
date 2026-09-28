@@ -19,7 +19,7 @@ the **legacy "before" state** — Transform produces the "after". Region:
 
 | Transform capability | Demo path | Deploy | Cost |
 |---|---|---|---|
-| Assessment discovery (MPA import) | `inventory/generate.py` → upload `out/fbctf-assessment.zip` | no | `$0` |
+| Assessment discovery (MPA import) | `inventory/generate.py` → upload `out/transform-demo-assessment.zip` | no | `$0` |
 | Discovery via the **real AWS Transform discovery tool** | `environments/discovery-collector` runs the Linux-installer tool; it SSH/WinRM-collects 12 hosts (6-host fleet + Windows/SQL Express + the 3 sqlmod hosts + the 2 oramod hosts) → `discovery_tool_export.zip`. The last export is committed at `inventory/discovery-tool-export/` and can be uploaded as-is | on demand, or `$0` with the committed export | ~$0.30/hr, self-terminating |
 | Discovery of a live AWS account without the tool | **no AWS-native scan exists** — see [ADR 005](decisions/005-drop-the-estate.md). Upload the tool export or the MPA ZIP | — | — |
 | Dependency map / move groups / wave planning | `network_connections.csv` **inside the same ZIP** as the servers file; the tool export carries the 3 real app→DB edges | no | `$0` |
@@ -34,7 +34,7 @@ the **legacy "before" state** — Transform produces the "after". Region:
 | SQL Server → Aurora — schema conversion only | `modernization/sqlserver-schema/*.sql` → AWS SCT desktop, offline | no | `$0` |
 | Oracle → Aurora PostgreSQL | `environments/oramod` live Oracle XE (`PRODUCT_SEQ` + trigger, PL/SQL package, view, `VIRTUAL` column) + the Java data layer | **yes** | oramod + Transform's DMS instance + Aurora |
 | Transform Custom (`atx`) | `modernization/atx-task.md` custom definition | no | **paid** — $0.035/agent-min (~$1–3) |
-| VMware migration — planning | `inventory/generate.py --vmware` → `out/fbctf-vmware-import.zip` → VMware migration job + a discovery account connector | no (S3 bucket) | ~`$0` |
+| VMware migration — planning | `inventory/generate.py --vmware` → `out/transform-demo-vmware-import.zip` → VMware migration job + a discovery account connector | no (S3 bucket) | ~`$0` |
 | VMware migration — replication/cutover | **not demoable** — MGN needs running source VMs and a staging VPC | — | — |
 | The "un-modernizable" story | **Project Nami** (PHP) in `environments/sqlmod` — Transform routes its SQL Server to Aurora but has no PHP code path; the runtime needs a rewrite or a container lift | **yes** | in sqlmod |
 

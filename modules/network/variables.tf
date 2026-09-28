@@ -1,10 +1,10 @@
 variable "name" {
-  description = "Name prefix for all network resources (must start with fbctf-)"
+  description = "Name prefix for all network resources (must start with transform-demo-)"
   type        = string
 
   validation {
-    condition     = startswith(var.name, "fbctf-")
-    error_message = "The deploy permission set scopes named resources to fbctf-*; the name must start with fbctf-."
+    condition     = startswith(var.name, "transform-demo-")
+    error_message = "The deploy permission set scopes named resources to transform-demo-*; the name must start with transform-demo-."
   }
 }
 

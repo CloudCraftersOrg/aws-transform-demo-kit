@@ -39,13 +39,13 @@ variable "max_lifetime_minutes" {
 }
 
 variable "discover_sqlmod" {
-  description = "Also peer to the fbctf-sqlmod VPC and add its 3 hosts (SQL Server, Contoso .NET app, Project Nami) to the import list"
+  description = "Also peer to the transform-demo-sqlmod VPC and add its 3 hosts (SQL Server, Contoso .NET app, Project Nami) to the import list"
   type        = bool
   default     = true
 }
 
 variable "discover_oramod" {
-  description = "Also peer to the fbctf-oramod VPC and add its 2 hosts (Oracle XE, Contoso Catalog / Java) to the import list"
+  description = "Also peer to the transform-demo-oramod VPC and add its 2 hosts (Oracle XE, Contoso Catalog / Java) to the import list"
   type        = bool
   default     = true
 }

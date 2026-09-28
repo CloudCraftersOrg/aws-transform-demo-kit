@@ -84,7 +84,7 @@ resource "aws_secretsmanager_secret_version" "app_user" {
 }
 
 # Scoreboard admin login. Terraform owns the secret because the instance role
-# can only READ fbctf-* secrets; the app-tier bootstrap hashes this password
+# can only READ transform-demo-* secrets; the app-tier bootstrap hashes this password
 # with the app's own extra/hash.php and inserts the admin team row.
 resource "random_password" "admin" {
   length  = 24

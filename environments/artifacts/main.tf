@@ -1,7 +1,6 @@
-# Standalone root for the artifacts bucket: it must SURVIVE `terraform
-# destroy` of the demo stack (the vendored packages and prebuilt tarballs are
-# the insurance against dead upstreams — §3.6). Destroy cycles only ever touch
-# environments/demo.
+# Standalone root for the persistent artifacts bucket: it must SURVIVE
+# `terraform destroy` of the on-demand roots (sqlmod, oramod,
+# discovery-collector). Destroy cycles never touch this root.
 
 terraform {
   required_version = ">= 1.10"
@@ -14,8 +13,8 @@ terraform {
   }
 
   backend "s3" {
-    bucket       = "fbctf-demo-tfstate-337058058699-use1"
-    key          = "fbctf-artifacts/terraform.tfstate"
+    bucket       = "transform-demo-tfstate-337058058699-use1"
+    key          = "artifacts/terraform.tfstate"
     region       = "us-east-1"
     encrypt      = true
     use_lockfile = true
@@ -27,7 +26,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project   = "fbctf-demo"
+      Project   = "transform-demo"
       Env       = "demo"
       Owner     = "davismar98"
       ManagedBy = "terraform"
@@ -38,7 +37,7 @@ provider "aws" {
 module "artifacts" {
   source = "../../modules/artifacts"
 
-  bucket_name = "fbctf-demo-artifacts-337058058699-use1"
+  bucket_name = "transform-demo-artifacts-337058058699-use1"
 }
 
 output "bucket_name" {

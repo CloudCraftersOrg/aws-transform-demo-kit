@@ -8,7 +8,7 @@ export AWS_PROFILE
 .PHONY: init plan apply destroy fmt validate
 
 init:
-	terraform -chdir=$(TF_DIR) init
+	terraform -chdir=$(TF_DIR) init -reconfigure
 
 plan:
 	terraform -chdir=$(TF_DIR) plan

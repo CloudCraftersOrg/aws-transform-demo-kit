@@ -22,13 +22,13 @@ resource "tls_private_key" "discovery" {
 }
 
 resource "aws_key_pair" "discovery" {
-  key_name   = "fbctf-discovery"
+  key_name   = "transform-demo-discovery"
   public_key = tls_private_key.discovery.public_key_openssh
 }
 
 resource "local_file" "discovery_key" {
   content         = tls_private_key.discovery.private_key_pem
-  filename        = "${path.module}/fbctf-discovery.pem"
+  filename        = "${path.module}/transform-demo-discovery.pem"
   file_permission = "0600"
 }
 
@@ -37,12 +37,12 @@ resource "aws_vpc" "this" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
-  tags                 = { Name = "fbctf-discovery-collector" }
+  tags                 = { Name = "transform-demo-discovery-collector" }
 }
 
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
-  tags   = { Name = "fbctf-discovery-collector" }
+  tags   = { Name = "transform-demo-discovery-collector" }
 }
 
 resource "aws_subnet" "public" {
@@ -50,14 +50,14 @@ resource "aws_subnet" "public" {
   cidr_block              = cidrsubnet(var.vpc_cidr, 8, 1)
   availability_zone       = data.aws_availability_zones.available.names[0]
   map_public_ip_on_launch = true
-  tags                    = { Name = "fbctf-discovery-collector-public" }
+  tags                    = { Name = "transform-demo-discovery-collector-public" }
 }
 
 # No inline `route` blocks: aws_route_table prunes any standalone aws_route on
 # the same table (the sqlmod / oramod peering routes) on the next apply. Keep all standalone.
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.this.id
-  tags   = { Name = "fbctf-discovery-collector" }
+  tags   = { Name = "transform-demo-discovery-collector" }
 }
 
 resource "aws_route" "public_igw" {
@@ -73,7 +73,7 @@ resource "aws_route_table_association" "public" {
 
 
 resource "aws_iam_role" "host" {
-  name = "fbctf-discovery-host"
+  name = "transform-demo-discovery-host"
   assume_role_policy = jsonencode({
     Version   = "2012-10-17"
     Statement = [{ Effect = "Allow", Principal = { Service = "ec2.amazonaws.com" }, Action = "sts:AssumeRole" }]
@@ -86,9 +86,9 @@ resource "aws_iam_role_policy_attachment" "ssm" {
 }
 
 resource "aws_s3_bucket" "export" {
-  bucket        = "fbctf-discovery-export-337058058699-use1"
+  bucket        = "transform-demo-discovery-export-337058058699-use1"
   force_destroy = true
-  tags          = { Name = "fbctf-discovery-export" }
+  tags          = { Name = "transform-demo-discovery-export" }
 }
 
 resource "aws_s3_bucket_public_access_block" "export" {
@@ -113,7 +113,7 @@ resource "aws_iam_role_policy" "export" {
 }
 
 resource "aws_iam_instance_profile" "host" {
-  name = "fbctf-discovery-host"
+  name = "transform-demo-discovery-host"
   role = aws_iam_role.host.name
 }
 
@@ -164,7 +164,7 @@ data "aws_ami" "windows_sql" {
 
 resource "aws_security_group" "windows" {
   count       = var.enable_windows ? 1 : 0
-  name        = "fbctf-discovery-windows"
+  name        = "transform-demo-discovery-windows"
   description = "Windows target: WinRM from the collector, intra-VPC for netstat"
   vpc_id      = aws_vpc.this.id
 
@@ -188,7 +188,7 @@ resource "aws_security_group" "windows" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = { Name = "fbctf-discovery-windows" }
+  tags = { Name = "transform-demo-discovery-windows" }
 }
 
 resource "aws_instance" "windows" {
@@ -218,7 +218,7 @@ resource "aws_instance" "windows" {
     peer_ips       = join(",", local.fleet_ips)
   })
 
-  tags = { Name = "fbctf-discovery-contoso-sql-01" }
+  tags = { Name = "transform-demo-discovery-contoso-sql-01" }
 
   # A running discovery must not be recycled when a target is added or the
   # lifetime toggled - same as the collector.
@@ -228,7 +228,7 @@ resource "aws_instance" "windows" {
 }
 
 resource "aws_security_group" "fleet" {
-  name        = "fbctf-discovery-fleet"
+  name        = "transform-demo-discovery-fleet"
   description = "Fleet: SSH from the collector, all traffic between fleet nodes for the dependency graph"
   vpc_id      = aws_vpc.this.id
 
@@ -252,7 +252,7 @@ resource "aws_security_group" "fleet" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = { Name = "fbctf-discovery-fleet" }
+  tags = { Name = "transform-demo-discovery-fleet" }
 }
 
 resource "aws_instance" "fleet" {
@@ -284,7 +284,7 @@ resource "aws_instance" "fleet" {
     peer_ips    = join(" ", [for ip in local.fleet_ips : ip if ip != each.value.ip])
   })
 
-  tags = { Name = "fbctf-discovery-${each.key}", Role = each.value.role }
+  tags = { Name = "transform-demo-discovery-${each.key}", Role = each.value.role }
 
   lifecycle {
     ignore_changes = [user_data]
@@ -293,7 +293,7 @@ resource "aws_instance" "fleet" {
 
 
 resource "aws_security_group" "collector" {
-  name        = "fbctf-discovery-collector"
+  name        = "transform-demo-discovery-collector"
   description = "Discovery tool: UI on 5000, egress to the fleet and the peered stacks"
   vpc_id      = aws_vpc.this.id
 
@@ -313,7 +313,7 @@ resource "aws_security_group" "collector" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = { Name = "fbctf-discovery-collector" }
+  tags = { Name = "transform-demo-discovery-collector" }
 }
 
 resource "aws_instance" "collector" {
@@ -343,7 +343,7 @@ resource "aws_instance" "collector" {
     ))
   })
 
-  tags = { Name = "fbctf-discovery-collector" }
+  tags = { Name = "transform-demo-discovery-collector" }
 
   # Disposable host; adding a target must not recycle a running collector.
   lifecycle {
@@ -356,7 +356,7 @@ data "aws_vpc" "sqlmod" {
   count = var.discover_sqlmod ? 1 : 0
   filter {
     name   = "tag:Name"
-    values = ["fbctf-sqlmod"]
+    values = ["transform-demo-sqlmod"]
   }
 }
 
@@ -365,7 +365,7 @@ data "aws_route_table" "sqlmod_public" {
   vpc_id = data.aws_vpc.sqlmod[0].id
   filter {
     name   = "tag:Name"
-    values = ["fbctf-sqlmod-public"]
+    values = ["transform-demo-sqlmod-public"]
   }
 }
 
@@ -374,7 +374,7 @@ data "aws_route_table" "sqlmod_app" {
   vpc_id = data.aws_vpc.sqlmod[0].id
   filter {
     name   = "tag:Name"
-    values = ["fbctf-sqlmod-app"]
+    values = ["transform-demo-sqlmod-app"]
   }
 }
 
@@ -382,7 +382,7 @@ data "aws_instance" "sqlmod_sqlserver" {
   count = var.discover_sqlmod ? 1 : 0
   filter {
     name   = "tag:Name"
-    values = ["fbctf-sqlmod-sqlserver"]
+    values = ["transform-demo-sqlmod-sqlserver"]
   }
   filter {
     name   = "instance-state-name"
@@ -394,7 +394,7 @@ data "aws_instance" "sqlmod_app" {
   count = var.discover_sqlmod ? 1 : 0
   filter {
     name   = "tag:Name"
-    values = ["fbctf-sqlmod-app"]
+    values = ["transform-demo-sqlmod-app"]
   }
   filter {
     name   = "instance-state-name"
@@ -406,7 +406,7 @@ data "aws_instance" "sqlmod_wordpress" {
   count = var.discover_sqlmod ? 1 : 0
   filter {
     name   = "tag:Name"
-    values = ["fbctf-sqlmod-wordpress"]
+    values = ["transform-demo-sqlmod-wordpress"]
   }
   filter {
     name   = "instance-state-name"
@@ -419,7 +419,7 @@ resource "aws_vpc_peering_connection" "sqlmod" {
   vpc_id      = aws_vpc.this.id
   peer_vpc_id = data.aws_vpc.sqlmod[0].id
   auto_accept = true
-  tags        = { Name = "fbctf-discovery-to-sqlmod" }
+  tags        = { Name = "transform-demo-discovery-to-sqlmod" }
 }
 
 resource "aws_route" "collector_to_sqlmod" {
@@ -447,7 +447,7 @@ data "aws_vpc" "oramod" {
   count = var.discover_oramod ? 1 : 0
   filter {
     name   = "tag:Name"
-    values = ["fbctf-oramod"]
+    values = ["transform-demo-oramod"]
   }
 }
 
@@ -456,7 +456,7 @@ data "aws_route_table" "oramod_public" {
   vpc_id = data.aws_vpc.oramod[0].id
   filter {
     name   = "tag:Name"
-    values = ["fbctf-oramod-public"]
+    values = ["transform-demo-oramod-public"]
   }
 }
 
@@ -465,7 +465,7 @@ data "aws_route_table" "oramod_app" {
   vpc_id = data.aws_vpc.oramod[0].id
   filter {
     name   = "tag:Name"
-    values = ["fbctf-oramod-app"]
+    values = ["transform-demo-oramod-app"]
   }
 }
 
@@ -473,7 +473,7 @@ data "aws_instance" "oramod_oracle" {
   count = var.discover_oramod ? 1 : 0
   filter {
     name   = "tag:Name"
-    values = ["fbctf-oramod-oracle"]
+    values = ["transform-demo-oramod-oracle"]
   }
   filter {
     name   = "instance-state-name"
@@ -485,7 +485,7 @@ data "aws_instance" "oramod_app" {
   count = var.discover_oramod ? 1 : 0
   filter {
     name   = "tag:Name"
-    values = ["fbctf-oramod-app"]
+    values = ["transform-demo-oramod-app"]
   }
   filter {
     name   = "instance-state-name"
@@ -498,7 +498,7 @@ resource "aws_vpc_peering_connection" "oramod" {
   vpc_id      = aws_vpc.this.id
   peer_vpc_id = data.aws_vpc.oramod[0].id
   auto_accept = true
-  tags        = { Name = "fbctf-discovery-to-oramod" }
+  tags        = { Name = "transform-demo-discovery-to-oramod" }
 }
 
 resource "aws_route" "collector_to_oramod" {

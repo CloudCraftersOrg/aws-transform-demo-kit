@@ -2,14 +2,14 @@
 """Turn fleet.yaml + connections.yaml into the upload AWS Transform's migration
 assessment ingests.
 
-    python3 generate.py            # writes out/fbctf-assessment.zip (+ the loose files)
+    python3 generate.py            # writes out/transform-demo-assessment.zip (+ the loose files)
     python3 generate.py --check    # validate only, write nothing (CI / pre-commit)
 
 The assessment importer only processes a network-connections file when it is
 **zipped together with the servers file** (verified against a live upload
 2026-08-27, and in docs/demo-runbook.md). So the deliverable is one ZIP:
 
-    fbctf-assessment.zip
+    transform-demo-assessment.zip
       mpa_servers.csv          MPA "Server" import columns, fixed order  <- required
       network_connections.csv  source/target host + IP + process name   <- required
       ASSESSMENT_INTENT.md     the modernization brief                   <- convenience
@@ -39,8 +39,8 @@ except ModuleNotFoundError:
 HERE = Path(__file__).parent
 OUT = HERE / "out"
 INTENT = "ASSESSMENT_INTENT.md"
-ZIP_NAME = "fbctf-assessment.zip"
-VMWARE_ZIP_NAME = "fbctf-vmware-import.zip"
+ZIP_NAME = "transform-demo-assessment.zip"
+VMWARE_ZIP_NAME = "transform-demo-vmware-import.zip"
 
 # --vmware: re-tag every host as VMware-sourced so it feeds the VMware migration
 # job's "import independently collected discovery data" step. Assessment-import
@@ -194,7 +194,7 @@ def main() -> int:
     ap.add_argument(
         "--vmware",
         action="store_true",
-        help="also emit fbctf-vmware-import.zip for the VMware migration job",
+        help="also emit transform-demo-vmware-import.zip for the VMware migration job",
     )
     args = ap.parse_args()
 

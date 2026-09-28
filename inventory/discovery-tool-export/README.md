@@ -11,6 +11,8 @@ data source.
 
 ## What it covers
 
+> Host names below are as captured on 2026-09-02, under the old `fbctf-` prefix; a fresh deployment names them `transform-demo-…` ([ADR 007](../../docs/decisions/007-transform-demo-prefix.md)).
+
 | App / component | Host | How discovered | In the export |
 |---|---|---|---|
 | Contoso Scoreboard (.NET / IIS) | `fbctf-sqlmod-app` `10.40.0.125` | WinRM | inventory, processes (`w3wp`), net |

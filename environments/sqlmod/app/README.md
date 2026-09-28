@@ -1,6 +1,6 @@
 # Contoso Scoreboard — the deployed .NET Framework app
 
-This is the app **running on `fbctf-sqlmod-app`** (Windows Server 2022 + IIS,
+This is the app **running on `transform-demo-sqlmod-app`** (Windows Server 2022 + IIS,
 `http://<eip>/`) — packaged as a buildable solution so it can go straight to
 **AWS Transform** for .NET modernization.
 
@@ -34,7 +34,7 @@ cd environments/sqlmod && rm -rf /tmp/contoso-scoreboard && mkdir /tmp/contoso-s
   && cp -R app/. /tmp/contoso-scoreboard/ \
   && (cd /tmp && zip -rq contoso-scoreboard-src.zip contoso-scoreboard -x '*/bin/*' '*/obj/*')
 aws s3 cp /tmp/contoso-scoreboard-src.zip \
-  s3://fbctf-transform-src-337058058699-use1/contoso-scoreboard-src.zip --profile personal-transform
+  s3://transform-demo-src-337058058699-use1/contoso-scoreboard-src.zip --profile personal-transform
 ```
 
 One top-level folder (`contoso-scoreboard/`) inside the zip, as the .NET job expects.

@@ -16,7 +16,7 @@ The last export it produced is committed at
 | Collector | `t3.xlarge` (4 vCPU / 16 GB — the tool's minimum), Amazon Linux 2023; user-data installs `AWS-Transform-discovery-tool.sh` and stages the import CSV + SSH key |
 | Fleet | 6 × `t3.small` — `catalog-svc-01` (Java 8), `finance-batch-01` (COBOL), `cache-01` (Redis), `mq-01` (RabbitMQ), `nfs-01` (NFS), `ci-01` (Jenkins) — real role processes + inter-node chatter for the dependency graph |
 | Windows | 1 × `t3.small`, **Windows Server 2022 + SQL Server 2022 Express** (`enable_windows`, default on) — WinRM HTTPS + a `discovery` local admin, IIS (`w3wp`), SQL on 1433. Exercises the tool's WinRM path, **SQL Server module**, and Windows OS discovery. Creds in `terraform output -json windows_target`. |
-| Peering | VPC peering + routes into `fbctf-sqlmod` and `fbctf-oramod`. Those roots open SSH / WinRM / Oracle Net to `discovery_cidr` (this VPC) themselves, so the rules survive their own `apply`. |
+| Peering | VPC peering + routes into `transform-demo-sqlmod` and `transform-demo-oramod`. Those roots open SSH / WinRM / Oracle Net to `discovery_cidr` (this VPC) themselves, so the rules survive their own `apply`. |
 
 Targets in the import list when everything is on (12 hosts):
 
@@ -24,7 +24,7 @@ Targets in the import list when everything is on (12 hosts):
 |---|---|---|
 | fleet | 6 synthetic Linux roles | SSH `ec2-user` |
 | Windows | `contoso-sql-01` (SQL 2022 Express) | WinRM `discovery` |
-| sqlmod | SQL Server 2022 host (AL2023), Contoso Scoreboard (Windows/IIS), Project Nami (Ubuntu 22.04) | SSH `ec2-user` / WinRM `discovery` (secret `fbctf-sqlmod/app-winrm`) / SSH `ubuntu` |
+| sqlmod | SQL Server 2022 host (AL2023), Contoso Scoreboard (Windows/IIS), Project Nami (Ubuntu 22.04) | SSH `ec2-user` / WinRM `discovery` (secret `transform-demo-sqlmod/app-winrm`) / SSH `ubuntu` |
 | oramod | Oracle 21c XE host, Contoso Catalog (both AL2023) | SSH `ec2-user`, plus the Oracle module on `:1521` with `transform_ro` |
 
 The discovery is **real** even though the fleet hosts are synthetic: real SSH,

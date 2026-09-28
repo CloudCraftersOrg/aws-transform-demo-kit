@@ -11,7 +11,7 @@
 module "network" {
   source = "../../modules/network"
 
-  name     = "fbctf-oramod"
+  name     = "transform-demo-oramod"
   vpc_cidr = var.vpc_cidr
   az_count = 2
 }
@@ -41,7 +41,7 @@ resource "random_password" "editor" {
 }
 
 resource "aws_secretsmanager_secret" "sys" {
-  name                    = "fbctf-oramod/oracle-sys"
+  name                    = "transform-demo-oramod/oracle-sys"
   description             = "Oracle SYS / SYSTEM password (XE container on EC2)"
   recovery_window_in_days = 0
 }
@@ -52,7 +52,7 @@ resource "aws_secretsmanager_secret_version" "sys" {
 }
 
 resource "aws_secretsmanager_secret" "app" {
-  name                    = "fbctf-oramod/catalog-app"
+  name                    = "transform-demo-oramod/catalog-app"
   description             = "Contoso Catalog DB user + read-only Transform user + app editor login"
   recovery_window_in_days = 0
 }
@@ -69,9 +69,9 @@ resource "aws_secretsmanager_secret_version" "app" {
 }
 
 resource "aws_s3_bucket" "artifacts" {
-  bucket        = "fbctf-oramod-artifacts-337058058699-use1"
+  bucket        = "transform-demo-oramod-artifacts-337058058699-use1"
   force_destroy = true
-  tags          = { Name = "fbctf-oramod-artifacts" }
+  tags          = { Name = "transform-demo-oramod-artifacts" }
 }
 
 resource "aws_s3_bucket_public_access_block" "artifacts" {
@@ -108,7 +108,7 @@ resource "aws_s3_object" "app" {
 }
 
 resource "aws_security_group" "oracle" {
-  name        = "fbctf-oramod-oracle"
+  name        = "transform-demo-oramod-oracle"
   description = "Oracle 1521 from within the VPC (the app tier and Transform DMS instance)"
   vpc_id      = module.network.vpc_id
 
@@ -145,11 +145,11 @@ resource "aws_security_group" "oracle" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = { Name = "fbctf-oramod-oracle" }
+  tags = { Name = "transform-demo-oramod-oracle" }
 }
 
 resource "aws_iam_role" "oracle" {
-  name = "fbctf-oramod-oracle"
+  name = "transform-demo-oramod-oracle"
   assume_role_policy = jsonencode({
     Version   = "2012-10-17"
     Statement = [{ Effect = "Allow", Principal = { Service = "ec2.amazonaws.com" }, Action = "sts:AssumeRole" }]
@@ -182,7 +182,7 @@ resource "aws_iam_role_policy" "oracle_access" {
 }
 
 resource "aws_iam_instance_profile" "oracle" {
-  name = "fbctf-oramod-oracle"
+  name = "transform-demo-oramod-oracle"
   role = aws_iam_role.oracle.name
 }
 
@@ -212,7 +212,7 @@ resource "aws_instance" "oracle" {
     oracle_image     = var.oracle_image
   })
 
-  tags = { Name = "fbctf-oramod-oracle" }
+  tags = { Name = "transform-demo-oramod-oracle" }
 
   lifecycle {
     ignore_changes = [user_data]
@@ -223,7 +223,7 @@ resource "aws_instance" "oracle" {
 
 resource "aws_security_group" "app" {
   count       = var.deploy_app ? 1 : 0
-  name        = "fbctf-oramod-app"
+  name        = "transform-demo-oramod-app"
   description = "Contoso Catalog: HTTP in, egress to Oracle + build/package repos"
   vpc_id      = module.network.vpc_id
 
@@ -250,12 +250,12 @@ resource "aws_security_group" "app" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = { Name = "fbctf-oramod-app" }
+  tags = { Name = "transform-demo-oramod-app" }
 }
 
 resource "aws_iam_role" "app" {
   count = var.deploy_app ? 1 : 0
-  name  = "fbctf-oramod-app"
+  name  = "transform-demo-oramod-app"
   assume_role_policy = jsonencode({
     Version   = "2012-10-17"
     Statement = [{ Effect = "Allow", Principal = { Service = "ec2.amazonaws.com" }, Action = "sts:AssumeRole" }]
@@ -291,7 +291,7 @@ resource "aws_iam_role_policy" "app_access" {
 
 resource "aws_iam_instance_profile" "app" {
   count = var.deploy_app ? 1 : 0
-  name  = "fbctf-oramod-app"
+  name  = "transform-demo-oramod-app"
   role  = aws_iam_role.app[0].name
 }
 
@@ -322,7 +322,7 @@ resource "aws_instance" "app" {
     oracle_host      = aws_instance.oracle.private_ip
   })
 
-  tags = { Name = "fbctf-oramod-app" }
+  tags = { Name = "transform-demo-oramod-app" }
 
   depends_on = [aws_s3_object.app, aws_instance.oracle]
 }
@@ -331,5 +331,5 @@ resource "aws_eip" "app" {
   count    = var.deploy_app ? 1 : 0
   instance = aws_instance.app[0].id
   domain   = "vpc"
-  tags     = { Name = "fbctf-oramod-app" }
+  tags     = { Name = "transform-demo-oramod-app" }
 }
